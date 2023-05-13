@@ -13,8 +13,14 @@ class Graph:
         self.__edges = [[0 for _ in range(size)] for _ in range(size)]
 
     def edge(self, node1, node2, weight):
-        self.__edges[Graph.chars[node1]][Graph.chars[node2]] = weight
-        self.__edges[Graph.chars[node2]][Graph.chars[node1]] = weight
+        if type(node1) == str:
+            node1 = Graph.chars[node1]
+
+        if type(node2) == str:
+            node2 = Graph.chars[node2]
+
+        self.__edges[node1][node2] = weight
+        self.__edges[node2][node1] = weight
 
     def __str__(self):
         return self.__edges.__str__()
@@ -45,23 +51,27 @@ class Graph:
             print("invalid source node")
             return -1
 
-        nodes = [(i, None, math.inf) for i in range(self.size)]
+        nodes = [(i, src, math.inf) for i in range(self.size)]
         nodes[src] = (src, None, 0)
 
         Q = Pqeue(nodes)
         MST = Graph(self.size)
+        taken_nodes = set()
 
         while not Q.empty():
             node = Q.pop()
+            taken_nodes.add(node[0])
 
             if node[1] != None:
                 MST.edge(node[0], node[1], node[2])
 
-                neighbors = self.__edges[node[0]]
+            neighbors = self.__edges[node[0]]
 
-                for i in range(len(neighbors)):
-                    if neighbors[i] != 0:
-                        Q.update((i, node[0], neighbors[i]))
+            for i in range(len(neighbors)):
+                if neighbors[i] != 0 and i not in taken_nodes:
+                    Q.update((i, node[0], neighbors[i]))
+
+        return MST
 
 
 
@@ -81,7 +91,7 @@ class Graph:
         # Draw the graph using a spring layout
         pos = nx.spring_layout(G)
         # pos = nx.arf_layout(G)
-        # pos = nx.circular_layout(G)
+        pos = nx.circular_layout(G)
         # pos = nx.fruchterman_reingold_layout(G)
         # pos = nx.shell_layout(G)
         edge_labels = {(u, v): d['weight'] for u, v, d in G.edges(data=True)}
@@ -110,6 +120,8 @@ g.edge('d', 'f', 14)
 g.edge('e', 'f', 10)
 g.edge('d', 'e', 9)
 # g.edge('h', 'g', 1)
-g.prim('c')
+mst = g.prim('a')
+mst.visualize()
+print(mst)
 # print(g)
 # g.visualize()

@@ -8,10 +8,14 @@ class Pqeue:
         return self.heap.pop()
 
     def empty(self):
-        return self.heap.last == 0
+        return self.heap.last < 0
 
     def update(self, edge):
+        index = self.heap.search(edge[0])
 
+        if edge[2] < self.heap.elements[index][2]:
+            self.heap.elements[index] = (self.heap.elements[index][0], edge[1], edge[2])
+            self.heap.bubble_up(index)
 
 
 

@@ -30,6 +30,13 @@ class Heap:
         self.elements[minimum], self.elements[i] = self.elements[i], self.elements[minimum]
         self.heapify(minimum)
 
+    def bubble_up(self, index):
+        parent = self.parent(index)
+
+        if self.elements[index][2] < self.elements[parent][2]:
+            self.elements[index], self.elements[parent] = self.elements[parent], self.elements[index]
+            self.bubble_up(parent)
+
     def pop(self):
         minimum = self.elements[0]
         self.elements[0], self.elements[self.last] = self.elements[self.last], self.elements[0]
@@ -39,10 +46,12 @@ class Heap:
 
     def search(self, node):
         for i in range(len(self.elements)):
-            if self.elements[i][0] == node[0]:
+            if self.elements[i][0] == node:
                 return i
 
-
+    @staticmethod
+    def parent(i):
+        return (i-1) // 2
     @staticmethod
     def left(i):
         return 2 * i + 1
