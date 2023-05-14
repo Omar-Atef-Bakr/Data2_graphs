@@ -3,14 +3,15 @@ import matplotlib.pyplot as plt
 import numpy
 import math
 from pqueue import Pqeue
+from LL import LL, Node
 
 class Graph:
-
     chars = {chr(n): n-97 for n in range(97, 97+26)}
 
-    def __init__(self, size) -> None:
+    def __init__(self, size, directed: bool) -> None:
         self.size = size
-        self.__edges = [[0 for _ in range(size)] for _ in range(size)]
+        self.__directed = directed
+        self.__adjacency = [LL() for _ in range(size)]
 
     def edge(self, node1, node2, weight):
         if type(node1) == str:
@@ -19,109 +20,122 @@ class Graph:
         if type(node2) == str:
             node2 = Graph.chars[node2]
 
-        self.__edges[node1][node2] = weight
-        self.__edges[node2][node1] = weight
+        self.__adjacency[node1].insert(Node(value=node2, weight=weight))
+
+        if not self.__directed:
+            self.__adjacency[node2].insert(Node(value=node1, weight=weight))
 
     def __str__(self):
-        return self.__edges.__str__()
-
-    def get_edges(self):
-        edges = []
-        for i in range(self.size):
-            for j in range(self.size - i):
-                if self.__edges[i][j] != 0:
-                    edges.append(i, j, self.__edges[i][j])
-
-
-    # def kruskal(self):
-    #     self.get_edges()
-
-    def neighbors(self, node):
-        if type(node) == str:
-            node = Graph.chars[node]
-
-        arr = self.__edges[node]
-
+        return self.__adjacency.__str__()
 
     def prim(self, src):
+        # from alphabet to index
         if type(src) == str:
             src = Graph.chars[src]
 
+        # validate
         if src >= self.size:
             print("invalid source node")
             return -1
 
+        # initialize Queue
         nodes = [(i, src, math.inf) for i in range(self.size)]
         nodes[src] = (src, None, 0)
-
         Q = Pqeue(nodes)
-        MST = Graph(self.size)
+
+        # create empty MST graph
+        MST = Graph(self.size, directed=True)
+
+        # set to keep track of visited nodes
         taken_nodes = set()
 
         while not Q.empty():
-            node = Q.pop()
-            taken_nodes.add(node[0])
+            # get next node
+            vertix = Q.pop()
 
-            if node[1] != None:
-                MST.edge(node[0], node[1], node[2])
+            # mark it as visited
+            taken_nodes.add(vertix[0])
 
-            neighbors = self.__edges[node[0]]
+            # if not first node then add edge to MST
+            if vertix[1] != None:
+                MST.edge(vertix[0], vertix[1], vertix[2])
 
-            for i in range(len(neighbors)):
-                if neighbors[i] != 0 and i not in taken_nodes:
-                    Q.update((i, node[0], neighbors[i]))
+            # get the out edges
+            neighbors = self.__adjacency[vertix[0]]
+
+            # iterate over edges
+            node = neighbors.head
+            while node != None:
+                if node.value not in taken_nodes:
+                    Q.update((node.value, vertix[0], node.weight))
+                node = node.next
+
+
+            # for i in range(len(neighbors)):
+            #     if neighbors[i] != 0 and i not in taken_nodes:
+            #         Q.update((i, node[0], neighbors[i]))
 
         return MST
 
+    def dijkstra(self, src):
+        shortest_path = Graph(self.size, directed= True)
 
+        # from alphabet to index
+        if type(src) == str:
+            src = Graph.chars[src]
 
+        # validate
+        if src >= self.size:
+            print("invalid source node")
+            return -1
 
+        vertices = [(i, None, math.inf) for i in range(self.size)]
+        vertices[src] = (src, None, 0)
+        Q = Pqeue(vertices)
 
+        taken_nodes = set()
+
+        while not Q.empty():
+            # get next node
+            vertix = Q.pop()
+
+            # mark it as visited
+            taken_nodes.add(vertix[0])
+
+            # if not first node then add edge to MST
+            if vertix[1] != None:
+                shortest_path.edge(vertix[0], vertix[1], vertix[2])
+
+            # get the out edges
+            neighbors = self.__adjacency[vertix[0]]
+
+            # iterate over edges
+            node = neighbors.head
+            while node != None:
+                if node.value not in taken_nodes:
+                    Q.update((node.value, vertix[0], node.weight+vertix[2]))
+                node = node.next
+        return shortest_path
 
     def visualize(self):
-        """
-        Visualize a graph using the provided adjacency matrix.
-        """
-        # Create a graph object from the adjacency matrix
-        array = numpy.array(self.__edges)
-        node_labels = {i: chr(65 + i) for i in range(array.shape[0])}  # create alphabetic node labels
-        G = nx.DiGraph(array)
-        G = nx.relabel_nodes(G, node_labels)
 
-        # Draw the graph using a spring layout
+        adj_list = self.__adjacency
+        # Create an empty graph
+        G = nx.Graph()
+
+        # Iterate over the linked lists and add the edges to the graph
+        for i in range(len(adj_list)):
+            curr = adj_list[i].head
+            while curr:
+                G.add_edge(chr(65 + i), chr(65 + curr.value), weight=curr.weight)
+                curr = curr.next
+
+        # Draw the graph using NetworkX and Matplotlib
         pos = nx.spring_layout(G)
-        # pos = nx.arf_layout(G)
-        pos = nx.circular_layout(G)
-        # pos = nx.fruchterman_reingold_layout(G)
-        # pos = nx.shell_layout(G)
-        edge_labels = {(u, v): d['weight'] for u, v, d in G.edges(data=True)}
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=12, font_color="blue")
-        nx.draw(G, pos, with_labels=True)
-        # Show the plot
+        edge_labels = nx.get_edge_attributes(G, 'weight')
+        nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=500)
+        nx.draw_networkx_edges(G, pos, width=1)
+        nx.draw_networkx_labels(G, pos, font_size=10, font_family='sans-serif')
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
+        plt.axis('off')
         plt.show()
-
-
-
-
-g = Graph(9)
-# print(g)
-g.edge('a', 'b', 4)
-g.edge('a', 'h', 8)
-g.edge('h', 'b', 11)
-g.edge('c', 'b', 8)
-g.edge('h', 'i', 7)
-g.edge('c', 'i', 2)
-g.edge('h', 'g', 1)
-g.edge('i', 'g', 6)
-g.edge('f', 'g', 2)
-g.edge('c', 'f', 4)
-g.edge('c', 'd', 7)
-g.edge('d', 'f', 14)
-g.edge('e', 'f', 10)
-g.edge('d', 'e', 9)
-# g.edge('h', 'g', 1)
-mst = g.prim('a')
-mst.visualize()
-print(mst)
-# print(g)
-# g.visualize()
