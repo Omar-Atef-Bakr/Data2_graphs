@@ -58,7 +58,7 @@ class Graph:
 
             # if not first node then add edge to MST
             if vertix[1] != None:
-                MST.edge(vertix[0], vertix[1], vertix[2])
+                MST.edge(vertix[1], vertix[0], vertix[2])
 
             # get the out edges
             neighbors = self.__adjacency[vertix[0]]
@@ -69,11 +69,6 @@ class Graph:
                 if node.value not in taken_nodes:
                     Q.update((node.value, vertix[0], node.weight))
                 node = node.next
-
-
-            # for i in range(len(neighbors)):
-            #     if neighbors[i] != 0 and i not in taken_nodes:
-            #         Q.update((i, node[0], neighbors[i]))
 
         return MST
 
@@ -93,18 +88,20 @@ class Graph:
         vertices[src] = (src, None, 0)
         Q = Pqeue(vertices)
 
-        taken_nodes = set()
+        # taken_nodes = set()
+        visited = [0 for _ in range(self.size)]
 
         while not Q.empty():
             # get next node
             vertix = Q.pop()
 
             # mark it as visited
-            taken_nodes.add(vertix[0])
+            # taken_nodes.add(vertix[0])
+            visited[vertix[0]] = vertix[2]
 
             # if not first node then add edge to MST
             if vertix[1] != None:
-                shortest_path.edge(vertix[0], vertix[1], vertix[2])
+                shortest_path.edge(vertix[1], vertix[0], vertix[2]-visited[vertix[1]])
 
             # get the out edges
             neighbors = self.__adjacency[vertix[0]]
@@ -112,30 +109,43 @@ class Graph:
             # iterate over edges
             node = neighbors.head
             while node != None:
-                if node.value not in taken_nodes:
+                # if node.value not in taken_nodes:
+                if visited[node.value] == 0:
                     Q.update((node.value, vertix[0], node.weight+vertix[2]))
                 node = node.next
         return shortest_path
 
-    def visualize(self):
+    def visualize(self, root=0, block=True, title='', tree=False):
 
+        plt.figure(title)
         adj_list = self.__adjacency
         # Create an empty graph
-        G = nx.Graph()
+        if self.__directed:
+            G = nx.DiGraph()
+        else:
+            G = nx.Graph()
 
         # Iterate over the linked lists and add the edges to the graph
         for i in range(len(adj_list)):
             curr = adj_list[i].head
             while curr:
-                G.add_edge(chr(65 + i), chr(65 + curr.value), weight=curr.weight)
+                if self.__directed:
+                    G.add_edge(chr(65 + i), chr(65 + curr.value), weight=curr.weight, arrowsize=12, arrowstyle='->')
+                else:
+                    G.add_edge(chr(65 + curr.value), chr(65 + i), weight=curr.weight)
                 curr = curr.next
 
         # Draw the graph using NetworkX and Matplotlib
-        pos = nx.spring_layout(G)
+        if tree:
+            pos = nx.nx_pydot.graphviz_layout(G, prog='dot', root=root)
+        else:
+            pos = nx.spring_layout(G)
         edge_labels = nx.get_edge_attributes(G, 'weight')
         nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=500)
         nx.draw_networkx_edges(G, pos, width=1)
         nx.draw_networkx_labels(G, pos, font_size=10, font_family='sans-serif')
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
+        # plt.gcf().canvas.set_window_title(title)
         plt.axis('off')
-        plt.show()
+        plt.show(block=block)
+

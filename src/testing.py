@@ -2,7 +2,6 @@ from graph import Graph
 
 # prim test
 g = Graph(size=9, directed=False)
-# print(g)
 g.edge('a', 'b', 4)
 g.edge('a', 'h', 8)
 g.edge('h', 'b', 11)
@@ -17,12 +16,10 @@ g.edge('c', 'd', 7)
 g.edge('d', 'f', 14)
 g.edge('e', 'f', 10)
 g.edge('d', 'e', 9)
-# g.edge('h', 'g', 1)
 mst = g.prim('a')
-mst.visualize()
-print(mst)
-# print(g)
-# g.visualize()
+g.visualize(block=False, title="before prim")
+mst.visualize(title="after prim", tree=True)
+print("prim: ", mst)
 
 
 # dijkstra test
@@ -40,4 +37,7 @@ d.edge('d', 'c', 9)
 d.edge('e', 'a', 7)
 
 dij = d.dijkstra(0)
-dij.visualize()
+d.visualize(block=False, title="before dijkstra")
+dij.visualize(title="after dijkstra", tree=True)
+print("shortest path: ", dij)
+
